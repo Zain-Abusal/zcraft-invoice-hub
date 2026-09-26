@@ -141,7 +141,7 @@ function Invoice() {
   );
 }
 
-function Field({ id, label, error, children, className }: { id: string; label: string; error?: string; children: React.ReactNode; className?: string }) {
+function Field({ id, label, error, children, className }: { id: string; label: string; error?: string | undefined; children: React.ReactNode; className?: string | undefined }) {
   return (
     <div className={`space-y-2 ${className ?? ""}`}>
       <Label htmlFor={id}>{label}</Label>
