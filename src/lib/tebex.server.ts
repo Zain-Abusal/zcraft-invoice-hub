@@ -1,4 +1,4 @@
-import type { InvoiceInput } from "./schema";
+import { totalCents as sumCents, type InvoiceInput } from "./schema";
 
 const BASE = "https://headless.tebex.io/api";
 
@@ -38,7 +38,12 @@ export async function createCheckout(input: InvoiceInput, ip: string) {
   if (input.currency !== c.storeCurrency) {
     throw new TebexError(`Your Tebex store charges in ${c.storeCurrency}. Pick ${c.storeCurrency} or change the store currency.`);
   }
-  const totalCents = Math.round(input.unitPrice * 100) * input.quantity;
+  const totalCents = sumCents(input.items);
+  if (totalCents <= 0) throw new TebexError("Invoice total must be greater than 0.");
+  const itemsText = input.items
+    .map((i) => `${i.quantity} x ${i.name} @ ${i.unitPrice.toFixed(2)}`)
+    .join("; ")
+    .slice(0, 1000);
   const unitCents = Math.round(c.unitPrice * 100);
   if (totalCents % unitCents !== 0) {
     throw new TebexError(`Total must be a multiple of the ${c.unitPrice.toFixed(2)} base unit.`);
@@ -62,9 +67,8 @@ export async function createCheckout(input: InvoiceInput, ip: string) {
           invoice_ref: `ZC-${Date.now().toString(36).toUpperCase()}`,
           client_name: input.clientName,
           client_email: input.email,
-          description: input.product,
-          unit_price: input.unitPrice.toFixed(2),
-          quantity: String(input.quantity),
+          description: itemsText,
+          item_count: String(input.items.length),
           total: (totalCents / 100).toFixed(2),
           currency: input.currency,
           notes: input.notes ?? "",
