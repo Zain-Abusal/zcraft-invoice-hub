@@ -8,9 +8,12 @@ function cfg() {
   const token = process.env["TEBEX_PUBLIC_TOKEN"];
   const packageId = Number(process.env["TEBEX_PACKAGE_ID"]);
   const unitPrice = Number(process.env["TEBEX_UNIT_PRICE"] ?? "1");
-  const storeCurrency = (process.env["TEBEX_STORE_CURRENCY"] ?? "USD").toUpperCase();
+  const storeCurrency = (
+    process.env["TEBEX_STORE_CURRENCY"] ?? "USD"
+  ).toUpperCase();
   const privateKey = process.env["TEBEX_PRIVATE_KEY"];
-  const siteUrl = process.env["SITE_URL"] ?? "https://invoice.zcraftstudios.com";
+  const siteUrl =
+    process.env["SITE_URL"] ?? "https://invoice.zcraftstudios.com";
 
   if (!token || !packageId || !(unitPrice > 0)) {
     throw new TebexError("Tebex is not configured on the server.");
@@ -22,6 +25,7 @@ function cfg() {
 async function call<T>(
   url: string,
   init: RequestInit,
+  step: string,
   auth?: string,
 ): Promise<T> {
   const headers: Record<string, string> = {
@@ -32,29 +36,32 @@ async function call<T>(
   if (auth) headers["Authorization"] = auth;
 
   const res = await fetch(url, { ...init, headers });
-  const text = await res.text();
+  const responseText = await res.text();
   let body: any = null;
 
   try {
-    body = text ? JSON.parse(text) : null;
+    body = responseText ? JSON.parse(responseText) : null;
   } catch {
     // Tebex returned non-JSON.
   }
 
   if (!res.ok) {
-    const msg = body?.detail ?? body?.message ?? body?.title ?? `HTTP ${res.status}`;
+    const msg =
+      body?.detail ?? body?.message ?? body?.title ?? `HTTP ${res.status}`;
+
     console.error(
-      `[tebex] ${init.method} failed (${res.status}): ${String(msg).slice(0, 300)}`,
+      `[tebex] ${step} failed (${res.status}): ${String(msg).slice(0, 300)}`,
     );
+
     throw new TebexError(
-      `Tebex rejected the request: ${String(msg).slice(0, 200)}`,
+      `Tebex ${step} failed: ${String(msg).slice(0, 200)}`,
     );
   }
 
   return body as T;
 }
 
-export async function createCheckout(input: InvoiceInput, ip: string) {
+export async function createCheckout(input: InvoiceInput, _ip: string) {
   const c = cfg();
 
   if (input.currency !== c.storeCurrency) {
@@ -64,6 +71,7 @@ export async function createCheckout(input: InvoiceInput, ip: string) {
   }
 
   const totalCents = sumCents(input.items);
+
   if (totalCents <= 0) {
     throw new TebexError("Invoice total must be greater than 0.");
   }
@@ -74,6 +82,7 @@ export async function createCheckout(input: InvoiceInput, ip: string) {
     .slice(0, 1000);
 
   const unitCents = Math.round(c.unitPrice * 100);
+
   if (totalCents % unitCents !== 0) {
     throw new TebexError(
       `Total must be a multiple of the ${c.unitPrice.toFixed(2)} base unit.`,
@@ -90,11 +99,9 @@ export async function createCheckout(input: InvoiceInput, ip: string) {
     {
       method: "POST",
       body: JSON.stringify({
-        email: input.email,
         complete_url: `${c.siteUrl}/paid`,
         cancel_url: `${c.siteUrl}/paid?cancelled=1`,
         complete_auto_redirect: true,
-        ...(c.privateKey && ip !== "unknown" ? { ip_address: ip } : {}),
         custom: {
           invoice_ref: `ZC-${Date.now().toString(36).toUpperCase()}`,
           client_name: input.clientName,
@@ -107,6 +114,7 @@ export async function createCheckout(input: InvoiceInput, ip: string) {
         },
       }),
     },
+    "basket creation",
     auth,
   );
 
@@ -127,10 +135,12 @@ export async function createCheckout(input: InvoiceInput, ip: string) {
         quantity: units,
       }),
     },
+    "package addition",
     auth,
   );
 
   const checkout = filled.data.links?.checkout;
+
   if (!checkout) {
     throw new TebexError("Tebex did not return a checkout link.");
   }
