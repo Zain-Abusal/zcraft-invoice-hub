@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/paid")({
-  validateSearch: (s: Record<string, unknown>) => ({ cancelled: s.cancelled ? 1 : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({ cancelled: s["cancelled"] ? 1 : undefined }),
   head: () => ({
     meta: [
       { title: "Payment status — ZCraft Studios" },

@@ -93,31 +93,31 @@ function Invoice() {
 
       <form onSubmit={onSubmit} noValidate className="space-y-5 rounded-xl border bg-card p-5 shadow-[var(--shadow-card)] sm:p-8">
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field id="clientName" label="Client name" error={errors.clientName}>
+          <Field id="clientName" label="Client name" error={errors["clientName"]}>
             <Input id="clientName" value={f.clientName} onChange={(e) => set("clientName")(e.target.value)} maxLength={100} />
           </Field>
-          <Field id="email" label="Client email" error={errors.email}>
+          <Field id="email" label="Client email" error={errors["email"]}>
             <Input id="email" type="email" inputMode="email" value={f.email} onChange={(e) => set("email")(e.target.value)} maxLength={255} />
           </Field>
         </div>
-        <Field id="product" label="Product or service" error={errors.product}>
+        <Field id="product" label="Product or service" error={errors["product"]}>
           <Input id="product" value={f.product} onChange={(e) => set("product")(e.target.value)} placeholder="Custom spawn build, 3 revisions" maxLength={150} />
         </Field>
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
-          <Field id="unitPrice" label="Unit price" error={errors.unitPrice}>
+          <Field id="unitPrice" label="Unit price" error={errors["unitPrice"]}>
             <Input id="unitPrice" type="number" inputMode="decimal" step="0.01" min="0" value={f.unitPrice} onChange={(e) => set("unitPrice")(e.target.value)} />
           </Field>
-          <Field id="quantity" label="Quantity" error={errors.quantity}>
+          <Field id="quantity" label="Quantity" error={errors["quantity"]}>
             <Input id="quantity" type="number" inputMode="numeric" step="1" min="1" value={f.quantity} onChange={(e) => set("quantity")(e.target.value)} />
           </Field>
-          <Field id="currency" label="Currency" error={errors.currency} className="col-span-2 sm:col-span-1">
+          <Field id="currency" label="Currency" error={errors["currency"]} className="col-span-2 sm:col-span-1">
             <Select value={f.currency} onValueChange={set("currency")}>
               <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
               <SelectContent>{CURRENCIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
         </div>
-        <Field id="notes" label="Notes (optional)" error={errors.notes}>
+        <Field id="notes" label="Notes (optional)" error={errors["notes"]}>
           <Textarea id="notes" rows={3} value={f.notes} onChange={(e) => set("notes")(e.target.value)} maxLength={1000} />
         </Field>
         <div className="flex flex-col gap-4 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
