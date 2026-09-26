@@ -10,7 +10,7 @@ Stack: TanStack Start (React 19, SSR + server functions), Tailwind v4, shadcn/ui
 2. `/` — invoice form (client name, email, product/service, unit price, quantity, currency, notes). Validated client- and server-side with Zod.
 3. The server function:
    - `POST /api/accounts/{token}/baskets` with `email`, `complete_url`, `cancel_url` and a `custom` object holding the invoice ref, client name, email, description, unit price, quantity, total, currency and notes.
-   - `POST /api/baskets/{ident}/packages` adding the base-unit package with `quantity = total / TEBEX_UNIT_PRICE`.
+   - `POST /api/baskets/{ident}/packages` adding the base-unit package with `quantity = total / live package base price`.
    - Returns `basket.links.checkout`, shown with a one-click copy button.
 4. The client pays on Tebex and lands on `/paid` (or `/paid?cancelled=1`).
 
@@ -25,7 +25,6 @@ See `.env.example`.
 | `TEBEX_PUBLIC_TOKEN` | yes | Webstore public token (Tebex Creator Panel → Integrations → API Keys) |
 | `TEBEX_PRIVATE_KEY` | no | Project private key; enables HTTP Basic auth and passing the client IP |
 | `TEBEX_PACKAGE_ID` | yes | Base-unit package ID |
-| `TEBEX_UNIT_PRICE` | yes | Price of the base-unit package (default `1.00`) |
 | `TEBEX_STORE_CURRENCY` | yes | Store currency, e.g. `USD` |
 | `SITE_URL` | yes | `https://invoice.zcraftstudios.com` |
 
@@ -34,10 +33,13 @@ Never prefix these with `VITE_` — that would ship them to the browser.
 ## Tebex package setup
 
 1. Creator Panel → Packages → create a package, e.g. **"Custom Commission Unit"**.
-2. Price: `1.00` in your store currency (use `0.01` if you need cent-exact totals; then set `TEBEX_UNIT_PRICE=0.01`).
+2. Price: `1.00` in your store currency (use `0.01` if you need cent-exact totals; the app reads the current package price automatically).
 3. Disable any per-customer purchase limits and quantity caps (quantities can reach the thousands with 0.01 units).
 4. No deliverables/commands required. Put it in a hidden category if you don't want it on the public store.
-5. Copy the package ID into `TEBEX_PACKAGE_ID`.
+5. Disable required package options (including Discord login) and custom variables on this dedicated invoice package. The app checks these before creating a basket.
+6. Copy the package ID into `TEBEX_PACKAGE_ID`.
+
+`TEBEX_UNIT_PRICE` is no longer used; the live package price is authoritative.
 
 Totals must be an exact multiple of the unit price — the server rejects anything else rather than silently rounding.
 

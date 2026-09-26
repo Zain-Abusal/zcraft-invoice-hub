@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
-import { useSession, getRequestIP } from "@tanstack/react-start/server";
+import { useSession as getServerSession, getRequestIP } from "@tanstack/react-start/server";
 
 export type GateSession = { unlocked?: boolean; at?: number };
 
@@ -10,12 +10,17 @@ export function sessionConfig() {
     password,
     name: "zc-invoice",
     maxAge: 60 * 60 * 8,
-    cookie: { httpOnly: true, secure: true, sameSite: "strict" as const, path: "/" },
+    cookie: {
+      httpOnly: true,
+      secure: process.env["NODE_ENV"] !== "development",
+      sameSite: "strict" as const,
+      path: "/",
+    },
   };
 }
 
 export function getGateSession() {
-  return useSession<GateSession>(sessionConfig());
+  return getServerSession<GateSession>(sessionConfig());
 }
 
 export async function isUnlocked() {

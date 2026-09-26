@@ -15,11 +15,12 @@ export const requireAuth = createServerFn({ method: "GET" }).handler(async () =>
 });
 
 export const signIn = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ password: z.string().min(1).max(200) }).parse(d))
+  .validator((d) => z.object({ password: z.string().min(1).max(200) }).parse(d))
   .handler(async ({ data }) => {
     const s = await import("./security.server");
     const rl = s.rateLimit("login", 5, 15 * 60 * 1000);
-    if (!rl.ok) return { ok: false as const, error: `Too many attempts. Try again in ${rl.retryAfter}s.` };
+    if (!rl.ok)
+      return { ok: false as const, error: `Too many attempts. Try again in ${rl.retryAfter}s.` };
     const expected = process.env["SITE_PASSWORD"];
     if (!expected) return { ok: false as const, error: "Sign-in is not configured on the server." };
     if (!s.passwordMatches(data.password, expected)) {
@@ -38,12 +39,14 @@ export const signOut = createServerFn({ method: "POST" }).handler(async () => {
 });
 
 export const createPaymentLink = createServerFn({ method: "POST" })
-  .inputValidator((d) => invoiceSchema.parse(d))
+  .validator((d) => invoiceSchema.parse(d))
   .handler(async ({ data }) => {
     const s = await import("./security.server");
-    if (!(await s.isUnlocked())) return { ok: false as const, error: "Your session expired. Sign in again." };
+    if (!(await s.isUnlocked()))
+      return { ok: false as const, error: "Your session expired. Sign in again." };
     const rl = s.rateLimit("create", 20, 10 * 60 * 1000);
-    if (!rl.ok) return { ok: false as const, error: `Rate limit reached. Try again in ${rl.retryAfter}s.` };
+    if (!rl.ok)
+      return { ok: false as const, error: `Rate limit reached. Try again in ${rl.retryAfter}s.` };
     const { createCheckout, TebexError } = await import("./tebex.server");
     try {
       const r = await createCheckout(data, rl.ip);
