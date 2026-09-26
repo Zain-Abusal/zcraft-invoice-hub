@@ -48,8 +48,13 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const response = await normalizeCatastrophicSsrResponse(await handler.fetch(request, env, ctx));
+      const out = new Response(response.body, response);
+      out.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+      out.headers.set("X-Frame-Options", "DENY");
+      out.headers.set("X-Content-Type-Options", "nosniff");
+      out.headers.set("Referrer-Policy", "no-referrer");
+      return out;
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {
